@@ -4,7 +4,7 @@ All notable changes to `metvae` are recorded here.
 
 ## 1.1.0+gnps_local
 
-Copy of MetVAE 1.1.0 for GNPS Local (`third_party/MetVAE`). Identical to 1.1.0 except that minimum versions lowered to `pandas >= 1.3` and `tqdm >= 4.60`.
+Copy of MetVAE 1.1.0 for GNPS Local (`MetVAE/`). Identical to 1.1.0 except that minimum versions lowered to `pandas >= 1.3` and `tqdm >= 4.60`.
 
 ## 1.1.0
 
