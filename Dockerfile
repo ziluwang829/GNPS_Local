@@ -15,6 +15,8 @@ WORKDIR /build
 # only the changed file invalidates its install layer.
 COPY requirements.txt ./requirements_root.txt
 COPY local_runner/requirements.txt ./requirements_local_runner.txt
+# copy MetVAE so it can be installed inside the container
+COPY MetVAE ./MetVAE
 
 # Install root deps first, then local_runner deps.
 # --prefix=/install writes everything to a staging directory that gets

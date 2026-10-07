@@ -15,3 +15,5 @@ Makefile.credentials
 !/gnps_jobs/.gitkeep
 /libraries/*
 /lib_holder/*
+**/*.egg-info/
+MetVAE/**/build/
