@@ -5,6 +5,7 @@ Adaptive version: Works as a pipeline step or a standalone workflow.
 
 import sys
 import fnmatch
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,6 +18,11 @@ if TYPE_CHECKING:
 def _sigmoid(x, k=20.0, c=0.75):
     """Sigmoid transformation for edge weights."""
     return 1 / (1 + np.exp(-k * (x - c)))
+
+def _safe_filename(name: str) -> str:
+    """Make free-text JOB_NAME usable as a filename (Windows-reserved chars, path separators)."""
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name).strip(" .")
+    return cleaned or ""
 
 def _find_graphml_input(directory: Path) -> Path | None:
     """Finds the first .graphml file in the directory, regardless of name."""
@@ -57,7 +63,7 @@ def run(job: "Job") -> bool:
     k_val = float(p.get("MCN_K", 20.0))
     c_val = float(p.get("MCN_C", 0.75))
     seed  = int(p.get("MCN_SEED", 123))
-    base_name = p.get("JOB_NAME") or job.id
+    base_name = _safe_filename(p.get("JOB_NAME") or "") or job.id
 
     # ── Step: load_graph ──────────────────────────────────────────────────────
     job.log("--- STEP: mcn_load_graph ---")

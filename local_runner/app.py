@@ -652,6 +652,10 @@ def startup_event():
     _restore_task_state()
     library_dir = Path(os.environ.get("GNPS_LIBRARIES_DIR", orc.LIBRARIES_ROOT))
 
+    interrupted = orc.reconcile_interrupted_jobs()
+    if interrupted:
+        print(f"Marked {interrupted} interrupted job(s) as failed.")
+
     for task_id, task_info in list(_index_build_tasks.items()):
         if task_info.get("status") == "building":
             # Tasks in "building" state when server restarts = process was killed
