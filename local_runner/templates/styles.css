@@ -43,6 +43,8 @@
   --t-library:    #dc2626;
   --t-cluster:    #0e7490;
   --t-graphml:    #15803d;
+  --t-metvae:     #a3e635;
+  --t-metvae-net: #4d7c0f;
   --t-other:      #636c76;
 }
 
@@ -86,6 +88,8 @@
   --t-library:    #f87171;
   --t-cluster:    #38bdf8;
   --t-graphml:    #4ade80;
+  --t-metvae:     #d9f99d;
+  --t-metvae-net: #84cc16;
   --t-other:      #7d8590;
 }
 
@@ -522,6 +526,40 @@ input:focus, select:focus {
   grid-column: span 2;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0 24px;
+}
+
+/* ── Inline checkboxes (e.g. MetVAE methods and outputs) ─────────────────── */
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 6px 0;
+}
+
+.check-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.check-row input[type=checkbox] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.check-row input[type=checkbox]:disabled,
+.check-row input[type=checkbox]:disabled + span {
+  cursor: default;
+  color: var(--muted);
 }
 
 /* ── File drop zones ─────────────────────────────────────────────────────── */

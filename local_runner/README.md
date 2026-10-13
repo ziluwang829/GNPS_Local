@@ -55,6 +55,7 @@ Download from: https://gnps-external.ucsd.edu/gnpslibrary
 | Molecular Networking | MGF / mzML files | `.graphml`, `clusterinfo.tsv`, `networkedges.tsv` |
 | FBMN | MGF + feature table (MZmine/XCMS/etc.) | `.graphml`, `clusterinfo_summary_enriched.tsv` |
 | GC-MS Deconvolution | mzML / CDF files | `specs_ms.mgf`, `clusterinfo.tsv`, `quantification.csv` |
+| MetVAE Correlation-Based Molecular Network | Feature table as .csv or .tsv and metadata (as .csv or .tsv) if adjusting for covariates | `df_sparse_pval.csv` and/or `df_sparse_sec.csv`; optional: `correlation_graph_<method>_cutoff<cutoff>.graphml`, `df_corr.csv` |
 
 ## Notes
 

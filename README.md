@@ -23,3 +23,5 @@ Benchmark testing shows that consumer laptops can achieve computing performace b
 
 ## Original Work
 This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](https://github.com/CCMS-UCSD/GNPS_Workflows)) developed by the Dorrestein Lab at UC San Diego.
+
+The MetVAE Correlation-Based Molecular Network workflow uses [MetVAE](https://github.com/FrederickHuangLin/MetVAE-PyPI) by Huang Lin (MIT License). Please see the GitHub link for the full details.

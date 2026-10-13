@@ -281,7 +281,7 @@ def get_output_files(job_id: str) -> list[dict]:
 
 def _run_job(job: Job):
     """Dispatch job to the correct workflow runner."""
-    from workflows import molecular_networking, fbmn, mshub_gc, mcn
+    from workflows import molecular_networking, fbmn, mshub_gc, mcn, metvae
 
     job.mark_running()
     job.log(f"Starting workflow: {job.workflow}")
@@ -292,6 +292,7 @@ def _run_job(job: Job):
             "fbmn": fbmn.run,
             "mshub_gc": mshub_gc.run,
             "mcn": mcn.run,
+            "metvae": metvae.run,
         }
         runner = runners.get(job.workflow)
         if not runner:

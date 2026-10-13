@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}MetVAE — GNPS Local{% endblock %}
+{% block content %}
+
+<h1>MetVAE Correlation-Based Molecular Network</h1>
+<p class="subtitle">MetVAE: metabolite correlation network from a feature table, imputing undetected values with a variational autoencoder, and adjusting for covariate effects</p>
+
+<form id="submit-form" enctype="multipart/form-data">
+<div class="card">
+
+  <div class="form-section-title">Feature Table (required)</div>
+  <div class="file-drop">
+    <input type="file" name="quantification_table" accept=".csv,.tsv">
+    <div class="file-placeholder">Drop feature table here or click to browse (.csv or .tsv)</div>
+    <div class="file-list"></div>
+  </div>
+
+  <div class="form-section-title">Basic Options</div>
+  <div class="form-grid">
+    <div style="grid-column:1 / -1;">
+      <label>Sparsification Methods</label>
+      <div class="check-row" style="justify-content:center;">
+        <label><input type="checkbox" name="METVAE_SPARSE_METHODS" value="pval" data-method checked><span>p-value</span></label>
+        <label><input type="checkbox" name="METVAE_SPARSE_METHODS" value="sec" data-method><span>SEC (slow on wide tables)</span></label>
+      </div>
+      <div class="hint" id="method-hint" style="text-align:center;">Pick one or both</div>
+    </div>
+  </div>
+
+  <div class="form-section-title">Outputs</div>
+  <div style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:0 24px;">
+    <div>
+      <div class="check-row" style="display:grid; grid-template-columns:repeat(2, max-content);">
+        <label><input type="checkbox" name="METVAE_OUTPUTS" value="graphml" id="out-graphml" checked><span>GraphML network</span></label>
+        <label><input type="checkbox" name="METVAE_OUTPUTS" value="corr" checked><span>Full correlation matrix</span></label>
+        <label><input type="checkbox" name="METVAE_OUTPUTS" value="pvalues" checked><span>p- and q-values (p-value method)</span></label>
+        <label><input type="checkbox" name="METVAE_OUTPUTS" value="checkpoint" checked><span>Model checkpoint</span></label>
+      </div>
+    </div>
+    <div style="flex:1; min-width:200px;">
+      <label>GraphML Correlation Cutoff</label>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <input type="number" name="METVAE_GRAPHML_CUTOFF" id="graphml-cutoff" value="0.7" step="0.05" min="0" max="1" style="width:90px; flex:none;">
+        <div class="hint" style="margin-top:0;">Network file keeps pairs with |correlation| ≥ this value.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section-title">Model Settings</div>
+  <div class="form-grid">
+    <div>
+      <label>Feature Zero Threshold</label>
+      <input type="number" name="METVAE_FEATURE_ZERO_THRESHOLD" value="0.3" step="0.05" min="0" max="1">
+      <div class="hint">Threshold to drop a feature</div>
+    </div>
+    <div>
+      <label>Latent Dimensions</label>
+      <input type="number" name="METVAE_LATENT_DIM" placeholder="auto" step="1" min="1">
+      <div class="hint">Autoencoder's latent space size</div>
+    </div>
+    <div>
+      <label>Learning Rate</label>
+      <input type="number" name="METVAE_LEARNING_RATE" value="0.01" step="any" min="0">
+      <div class="hint">Optimizer step size</div>
+    </div>
+    <div>
+      <label>Training Epochs</label>
+      <input type="number" name="METVAE_MAX_EPOCHS" value="1000" step="50" min="1">
+    </div>
+    <div>
+      <label>Imputations</label>
+      <input type="number" name="METVAE_NUM_SIM" value="100" step="10" min="1">
+      <div class="hint">Number of imputed data sets</div>
+    </div>
+    <div>
+      <label>Random Seed</label>
+      <input type="number" name="METVAE_SEED" value="0" step="1" min="0">
+    </div>
+  </div>
+
+  <div class="form-section-title">Device</div>
+  <div class="check-row">
+    <button type="button" class="btn btn-ghost" id="gpu-detect">Detect and Use GPU</button>
+    <label><input type="checkbox" name="METVAE_USE_GPU" value="1" id="gpu-use" disabled><span>Use GPU (CUDA)</span></label>
+  </div>
+  <div class="hint" id="gpu-status"></div>
+
+  <div class="form-section-title">Optional Inputs</div>
+  <div class="form-grid" style="margin-bottom:20px;">
+    <div style="grid-column:span 2;">
+      <label>Job Name</label>
+      <input type="text" name="JOB_NAME" placeholder="Enter a custom name for this job..." style="width:100%;">
+    </div>
+  </div>
+
+  <label>Metadata Table of Covariates (.tsv or .csv)</label>
+  <div class="file-drop">
+    <input type="file" name="metadata_table" accept=".tsv,.csv">
+    <div class="file-placeholder">Drop metadata table or click to browse</div>
+    <div class="file-list"></div>
+  </div>
+
+  <div class="form-grid">
+    <div>
+      <label>Continuous Covariates</label>
+      <input type="text" name="METVAE_CONTINUOUS_COVARIATES" placeholder="e.g. ATTRIBUTE_Age">
+      <div class="hint">Numeric columns to adjust for, separated by commas</div>
+    </div>
+    <div>
+      <label>Categorical Covariates</label>
+      <input type="text" name="METVAE_CATEGORICAL_COVARIATES" placeholder="e.g. ATTRIBUTE_Batch">
+      <div class="hint">Grouping columns to adjust for, separated by commas</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+    <span id="submit-status" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+</div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script>
+wireSubmitForm('submit-form', 'submit-btn', 'submit-status', '/api/submit/metvae');
+
+const methodBoxes = Array.from(document.querySelectorAll('input[data-method]'));
+const methodHint  = document.getElementById('method-hint');
+const methodHintText = methodHint.textContent;
+methodBoxes.forEach(box => box.addEventListener('change', () => {
+  if (!methodBoxes.some(b => b.checked)) {
+    box.checked = true;
+    methodHint.textContent = 'Keep at least one method ticked.';
+  } else {
+    methodHint.textContent = methodHintText;
+  }
+}));
+
+const graphmlBox    = document.getElementById('out-graphml');
+const graphmlCutoff = document.getElementById('graphml-cutoff');
+graphmlBox.addEventListener('change', () => { graphmlCutoff.disabled = !graphmlBox.checked; });
+
+const gpuBtn    = document.getElementById('gpu-detect');
+const gpuBox    = document.getElementById('gpu-use');
+const gpuStatus = document.getElementById('gpu-status');
+gpuBtn.addEventListener('click', async () => {
+  gpuBtn.disabled = true;
+  gpuStatus.textContent = 'Checking with PyTorch…';
+  try {
+    const r = await fetch('/api/metvae/gpu');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'GPU check failed');
+    gpuBox.disabled = !d.usable;
+    gpuBox.checked  = d.usable;
+    if (d.usable) {
+      gpuStatus.textContent = `Found ${d.devices.join(', ')} (CUDA ${d.cuda_version}, PyTorch ${d.torch}). MetVAE will use it.`;
+    } else {
+      gpuStatus.textContent = 'No CUDA detected.';
+    }
+  } catch (err) {
+    gpuStatus.textContent = err.message;
+  }
+  gpuBtn.disabled = false;
+});
+</script>
+{% endblock %}

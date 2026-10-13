@@ -68,7 +68,7 @@ async def jobs_page(request: Request):
 
 @app.get("/submit/{workflow}", response_class=HTMLResponse)
 async def submit_page(request: Request, workflow: str):
-    if workflow not in ("molecular_networking", "fbmn", "mshub_gc", "mcn"):
+    if workflow not in ("molecular_networking", "fbmn", "mshub_gc", "mcn", "metvae"):
         raise HTTPException(404, "Unknown workflow")
     return templates.TemplateResponse(f"submit_{workflow}.html", {"request": request})
 
@@ -342,6 +342,95 @@ async def submit_mcn(
     await _save_uploads(job, input_spectra, subfolder=None)
     orc.start_job(job)
     return {"job_id": job.id, "status": job.status}
+
+@app.post("/api/submit/metvae")
+async def submit_metvae(
+    JOB_NAME: str = Form(""),
+    quantification_table: UploadFile = File(...),
+    metadata_table: Optional[UploadFile] = File(default=None),
+    METVAE_SPARSE_METHODS: List[str] = Form([]),
+    METVAE_OUTPUTS: List[str] = Form([]),
+    METVAE_FEATURE_ZERO_THRESHOLD: float = Form(0.3),
+    METVAE_LATENT_DIM: str = Form(""),
+    METVAE_LEARNING_RATE: float = Form(0.01),
+    METVAE_MAX_EPOCHS: int = Form(1000),
+    METVAE_NUM_SIM: int = Form(100),
+    METVAE_GRAPHML_CUTOFF: float = Form(0.7),
+    METVAE_SEED: int = Form(0),
+    METVAE_USE_GPU: str = Form(""),
+    METVAE_CONTINUOUS_COVARIATES: str = Form(""),
+    METVAE_CATEGORICAL_COVARIATES: str = Form(""),
+):
+    methods = [m for m in ("pval", "sec") if m in METVAE_SPARSE_METHODS]
+    if not methods:
+        raise HTTPException(400, "Choose at least one sparsification method")
+    outputs = [o for o in ("graphml", "corr", "pvalues", "checkpoint") if o in METVAE_OUTPUTS]
+    latent_dim = METVAE_LATENT_DIM.strip()
+    if latent_dim and not (latent_dim.isdigit() and int(latent_dim) > 0):
+        raise HTTPException(400, "Latent dimensions must be a whole number above 0, or empty for automatic")
+    if METVAE_LEARNING_RATE <= 0:
+        raise HTTPException(400, "Learning rate must be above 0")
+    # Only .csv and .tsv tables
+    suffix = Path(quantification_table.filename or "").suffix.lower()
+    if suffix not in (".csv", ".tsv"):
+        raise HTTPException(400, "The feature table must be a .csv or .tsv file")
+    meta_suffix = None
+    if metadata_table and metadata_table.filename:
+        meta_suffix = Path(metadata_table.filename).suffix.lower()
+        if meta_suffix not in (".csv", ".tsv"):
+            raise HTTPException(400, "The metadata table must be a .csv or .tsv file")
+    params = {
+        "JOB_NAME": JOB_NAME,
+        "METVAE_SPARSE_METHODS": ",".join(methods),
+        "METVAE_OUTPUTS": ",".join(outputs),
+        "METVAE_FEATURE_ZERO_THRESHOLD": str(METVAE_FEATURE_ZERO_THRESHOLD),
+        "METVAE_LATENT_DIM": latent_dim,
+        "METVAE_LEARNING_RATE": str(METVAE_LEARNING_RATE),
+        "METVAE_MAX_EPOCHS": str(METVAE_MAX_EPOCHS),
+        "METVAE_NUM_SIM": str(METVAE_NUM_SIM),
+        "METVAE_GRAPHML_CUTOFF": str(METVAE_GRAPHML_CUTOFF),
+        "METVAE_SEED": str(METVAE_SEED),
+        "METVAE_USE_GPU": "1" if METVAE_USE_GPU == "1" else "0",
+        "METVAE_CONTINUOUS_COVARIATES": METVAE_CONTINUOUS_COVARIATES,
+        "METVAE_CATEGORICAL_COVARIATES": METVAE_CATEGORICAL_COVARIATES,
+    }
+    job = orc.create_job("metvae", params)
+    await _save_single_upload(job, quantification_table, f"quantification_table{suffix}")
+    if meta_suffix:
+        await _save_single_upload(job, metadata_table, f"metadata{meta_suffix}")
+    orc.start_job(job)
+    return {"job_id": job.id, "status": job.status}
+
+# Run in the Python MetVAE environment
+_METVAE_GPU_PROBE = """
+import json, torch
+cuda = torch.cuda.is_available()
+mps = getattr(torch.backends, "mps", None)
+print(json.dumps({
+    "torch": torch.__version__,
+    "cuda": cuda,
+    "cuda_version": torch.version.cuda,
+    "devices": [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())] if cuda else [],
+    "mps": bool(mps and mps.is_available()),
+}))
+"""
+
+@app.get("/api/metvae/gpu")
+async def metvae_gpu():
+    """Report whether PyTorch sees a GPU that MetVAE can use (MetVAE uses CUDA)."""
+    try:
+        r = await asyncio.to_thread(
+            subprocess.run, [sys.executable, "-c", _METVAE_GPU_PROBE],
+            capture_output=True, text=True, timeout=120,
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "GPU check timed out")
+    if r.returncode != 0:
+        lines = r.stderr.strip().splitlines()
+        raise HTTPException(500, f"GPU check failed: {lines[-1] if lines else 'unknown error'}")
+    info = json.loads(r.stdout.strip().splitlines()[-1])
+    info["usable"] = bool(info["cuda"] and info["devices"])
+    return info
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

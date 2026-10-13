@@ -39,3 +39,4 @@ xlrd
 openpyxl
 plotly
 psutil
+./MetVAE

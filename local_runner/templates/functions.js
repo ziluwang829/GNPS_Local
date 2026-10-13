@@ -411,6 +411,8 @@ const STEP_TRACKS = [
   { match: /library_search_prep|library_search|merge_libsearch|libsearch_db_annot/i,           cssVar: '--t-library',    label: 'Library'         },
   { match: /clusterinfosummary_for_featurenetworks|network_edges_display|enrich_clusterinfo/i, cssVar: '--t-cluster',    label: 'Cluster & Edges' },
   { match: /graphml|convert_graph|mcn/i,                                                       cssVar: '--t-graphml',    label: 'GraphML / MCN'   },
+  { match: /metvae_prepare_input|metvae_initialize_model|metvae_train_model/i,                 cssVar: '--t-metvae',     label: 'MetVAE Model'    },
+  { match: /metvae_estimate_correlations|metvae_.*_sparsification|metvae/i,                    cssVar: '--t-metvae-net', label: 'MetVAE Network'  },
 ];
 
 function stepTrack(stepName) {
